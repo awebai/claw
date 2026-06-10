@@ -234,7 +234,29 @@ var upgradeCmd = &cobra.Command{
 	},
 }
 
+var billingCmd = &cobra.Command{
+	Use:   "billing",
+	Short: "Manage your subscription: cancel, payment method, invoices",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		secret, err := loadSecret()
+		if err != nil {
+			return err
+		}
+		status, out, err := clawebRequest("POST", "/v1/billing/portal", nil, secret)
+		if err != nil {
+			return err
+		}
+		if status != 200 {
+			return apiError(status, out)
+		}
+		url, _ := out["portal_url"].(string)
+		fmt.Println("Open this link to manage your subscription (cancel any time):")
+		fmt.Println(url)
+		return nil
+	},
+}
+
 func init() {
 	claimHumanCmd.Flags().StringVar(&claimEmail, "email", "", "Your email address")
-	rootCmd.AddCommand(registerCmd, newCmd, whoamiCmd, statusCmd, claimHumanCmd, recoverCmd, upgradeCmd)
+	rootCmd.AddCommand(registerCmd, newCmd, whoamiCmd, statusCmd, claimHumanCmd, recoverCmd, upgradeCmd, billingCmd)
 }
