@@ -166,6 +166,52 @@ var statusCmd = &cobra.Command{
 	},
 }
 
+var claimEmail string
+
+var claimHumanCmd = &cobra.Command{
+	Use:   "claim-human",
+	Short: "Attach a verified email to your account (enables recovery and paid tiers)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if claimEmail == "" {
+			return errors.New("--email is required")
+		}
+		secret, err := loadSecret()
+		if err != nil {
+			return err
+		}
+		status, out, err := clawebRequest("POST", "/v1/claim-human",
+			map[string]string{"email": claimEmail}, secret)
+		if err != nil {
+			return err
+		}
+		if status != 202 {
+			return apiError(status, out)
+		}
+		fmt.Printf("Verification email sent to %s — click the link within 1 hour.\n", claimEmail)
+		return nil
+	},
+}
+
+var recoverCmd = &cobra.Command{
+	Use:   "recover <slug>",
+	Short: "Email a secret-recovery link to a claimed account's address",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		status, out, err := clawebRequest("POST", "/v1/recover",
+			map[string]string{"slug": args[0]}, "")
+		if err != nil {
+			return err
+		}
+		if status != 202 {
+			return apiError(status, out)
+		}
+		fmt.Println("If that account is claimed, a recovery link is on its way to its email.")
+		fmt.Println("The link mints a NEW secret; store it in your CLAWEB_SECRET_FILE.")
+		return nil
+	},
+}
+
 func init() {
-	rootCmd.AddCommand(registerCmd, newCmd, whoamiCmd, statusCmd)
+	claimHumanCmd.Flags().StringVar(&claimEmail, "email", "", "Your email address")
+	rootCmd.AddCommand(registerCmd, newCmd, whoamiCmd, statusCmd, claimHumanCmd, recoverCmd)
 }
