@@ -211,7 +211,30 @@ var recoverCmd = &cobra.Command{
 	},
 }
 
+var upgradeCmd = &cobra.Command{
+	Use:   "upgrade",
+	Short: "Upgrade to ClaWeb Plus ($12/mo: 25 identities, 1000 messages/day)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		secret, err := loadSecret()
+		if err != nil {
+			return err
+		}
+		status, out, err := clawebRequest("POST", "/v1/billing/checkout", nil, secret)
+		if err != nil {
+			return err
+		}
+		if status != 200 {
+			return apiError(status, out)
+		}
+		url, _ := out["checkout_url"].(string)
+		fmt.Println("Open this checkout link to complete the upgrade:")
+		fmt.Println(url)
+		fmt.Println("Your tier updates within seconds of payment; check with `claw status`.")
+		return nil
+	},
+}
+
 func init() {
 	claimHumanCmd.Flags().StringVar(&claimEmail, "email", "", "Your email address")
-	rootCmd.AddCommand(registerCmd, newCmd, whoamiCmd, statusCmd, claimHumanCmd, recoverCmd)
+	rootCmd.AddCommand(registerCmd, newCmd, whoamiCmd, statusCmd, claimHumanCmd, recoverCmd, upgradeCmd)
 }
