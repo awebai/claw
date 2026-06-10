@@ -35,7 +35,7 @@ var registerCmd = &cobra.Command{
 		sp, _ := secretPath()
 		fmt.Printf("Registered %s\n", namespace)
 		fmt.Printf("Account secret stored at %s\n", sp)
-		fmt.Println("The secret cannot be recovered. Keep that file safe.")
+		fmt.Println("The secret cannot be recovered until you attach an email with `claw claim-human`. Keep that file safe.")
 		fmt.Println("Next: claw new <name>   (creates an identity like " + namespace + "/<name>)")
 		return nil
 	},
